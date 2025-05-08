@@ -1,0 +1,971 @@
+/* Mail-Pool Styles */
+:root {
+  --primary: #fd7e14;
+  --primary-hover: #e76500;
+  --primary-light: rgba(253, 126, 20, 0.1);
+  --secondary: #475569;
+  --card-bg: #ffffff;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --info: #3b82f6;
+  --background: #f5f7fa;
+  --card-background: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --hover: rgba(0, 0, 0, 0.03);
+  --input-background: #f9fafb;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+
+  /* Status colors */
+  --status-pending: #f59e0b;
+  --status-pending-bg: #fff7ed;
+  --status-pending-border: #fed7aa;
+
+  --status-approved: #10b981;
+  --status-approved-bg: #ecfdf5;
+  --status-approved-border: #a7f3d0;
+
+  --status-rejected: #ef4444;
+  --status-rejected-bg: #fef2f2;
+  --status-rejected-border: #fecaca;
+}
+
+/* Screen Styles */
+.screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--background);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Verbesserte Styles für den Zurück-Button */
+.back-button {
+  background: var(--card-bg);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow);
+  margin-right: 15px;
+}
+
+.back-button:hover,
+.back-button:focus {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.back-button:active {
+  transform: translateY(0);
+}
+
+.back-button i {
+  font-size: 18px;
+  color: var(--text-color);
+  transition: var(--transition);
+}
+
+.back-button:hover i {
+  color: var(--primary);
+}
+
+.screen-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* Für besseres Scrolling auf iOS */
+}
+
+/* Statistik-Karten */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Oberer Farbstreifen */
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  background-color: var(--primary-light);
+  color: var(--primary);
+}
+
+.stat-icon i {
+  font-size: 18px;
+}
+
+.stat-content h3 {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 6px 0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.stat-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Anfrage-Button */
+.request-button-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.request-button {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 300px;
+  justify-content: center;
+}
+
+.request-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.request-button:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.request-button i {
+  font-size: 18px;
+}
+
+/* Card Styles */
+.card {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  background-color: white;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 0;
+  max-height: 60vh; /* Höhe auf 60% der Bildschirmhöhe begrenzen */
+  overflow-y: auto; /* Vertikale Scrollbar bei Bedarf anzeigen */
+  -webkit-overflow-scrolling: touch; /* Für besseres Scrolling auf iOS */
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE und Edge */
+}
+
+.tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari und Opera */
+}
+
+.tab-btn {
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 14px;
+  min-width: auto; /* Erlaubt kleinere Tabs auf mobilen Geräten */
+  flex-shrink: 0; /* Verhindert, dass Tabs schrumpfen */
+}
+
+.tab-btn:hover {
+  color: var(--text);
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Tab Counter Badge */
+.tab-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background-color: var(--primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tab-btn:not(.active) .tab-counter {
+  background-color: #cbd5e1;
+}
+
+.tab-content {
+  display: none;
+  padding: 0; /* Padding entfernt für bessere Platznutzung */
+  max-height: calc(60vh - 45px); /* Höhe angepasst für Tabs */
+  overflow-y: auto; /* Vertikale Scrollbar bei Bedarf anzeigen */
+  -webkit-overflow-scrolling: touch; /* Für besseres Scrolling auf iOS */
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Verbessern Sie das Styling der Scrollbar für moderne Browser */
+.tab-content::-webkit-scrollbar {
+  width: 4px; /* Schmaler für mobile Geräte */
+}
+
+.tab-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Request List */
+.request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Reduziert für mobile Geräte */
+  padding: 12px; /* Padding hier hinzugefügt statt im tab-content */
+}
+
+/* Verbesserte Anfrage-Elemente für mobile Ansicht */
+.request-item {
+  background-color: white;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  touch-action: manipulation;
+  margin-bottom: 12px;
+}
+
+.request-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.request-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  background-color: #f8fafc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.request-date i {
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--primary);
+}
+
+.request-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  background-color: #f8fafc;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.request-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+}
+
+.request-count i {
+  margin-right: 6px;
+  color: var(--primary);
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.status-badge-pending {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending);
+  border: 1px solid var(--status-pending-border);
+}
+
+.status-badge-approved {
+  background-color: var(--status-approved-bg);
+  color: var(--status-approved);
+  border: 1px solid var(--status-approved-border);
+}
+
+.status-badge-rejected {
+  background-color: var(--status-rejected-bg);
+  color: var(--status-rejected);
+  border: 1px solid var(--status-rejected-border);
+}
+
+.status-badge i {
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+.request-notes {
+  font-size: 13px;
+  color: var(--text-secondary);
+  background-color: #f8fafc;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  border-left: 3px solid var(--primary);
+}
+
+.notesContainer {
+  margin-top: 10px;
+}
+
+.notesLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  display: block;
+}
+
+.notesText {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.request-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: white;
+}
+
+.empty-state i {
+  font-size: 32px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  max-width: 250px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* Modals */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(3px);
+  transition: all 0.3s ease;
+  padding: 16px;
+}
+
+.modal-overlay.show,
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 350px;
+  max-height: 90vh;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.modal-close:hover {
+  color: var(--error);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex-grow: 1;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background-color: #f8f9fa;
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(253, 126, 20, 0.2);
+  outline: none;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+small {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: block;
+  margin-top: 4px;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-outline:hover {
+  background-color: var(--hover);
+}
+
+.btn-danger {
+  background-color: var(--error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+}
+
+/* Mail Request Info */
+.mail-request-info {
+  background-color: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+}
+
+.mail-info-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.mail-info-item:last-child {
+  margin-bottom: 0;
+}
+
+.mail-info-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.mail-info-value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Request Count Container */
+.request-count-container {
+  display: flex;
+  align-items: center;
+}
+
+.request-count-controls {
+  display: flex;
+  flex-direction: column;
+  margin-left: 8px;
+}
+
+.count-control {
+  background: none;
+  border: 1px solid var(--border);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.count-control:hover {
+  background-color: var(--hover);
+}
+
+.count-control:first-child {
+  margin-bottom: 4px;
+}
+
+/* Success Message */
+.success-message {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  background-color: var(--success);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2);
+}
+
+.success-icon i {
+  color: white;
+  font-size: 32px;
+}
+
+/* Warning Icon */
+.warning-icon {
+  width: 64px;
+  height: 64px;
+  background-color: var(--warning);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 16px rgba(245, 158, 11, 0.2);
+}
+
+.warning-icon i {
+  color: white;
+  font-size: 32px;
+}
+
+/* Cancel Confirm Message */
+.cancel-confirm-message {
+  text-align: center;
+  padding: 16px 0;
+}
+
+.cancel-details {
+  margin-top: 12px;
+  padding: 8px;
+  background-color: #f8fafc;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  padding: 12px 16px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  z-index: 1001;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  max-width: 300px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.notification-success {
+  border-left: 4px solid var(--success);
+}
+
+.notification-error {
+  border-left: 4px solid var(--error);
+}
+
+.notification-warning {
+  border-left: 4px solid var(--warning);
+}
+
+.notification-info {
+  border-left: 4px solid var(--info);
+}
+
+/* Stornieren-Button */
+.cancel-request-btn {
+  background-color: var(--error);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px; /* Größer für bessere Touch-Ziele */
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.cancel-request-btn:hover {
+  background-color: #dc2626;
+}
+
+.cancel-request-btn:active {
+  transform: scale(0.95); /* Feedback bei Touch */
+}
+
+.cancel-request-btn i {
+  font-size: 10px;
+}
+
+/* Responsive Anpassungen */
+@media (max-width: 360px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .tab-btn {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .card-body {
+    max-height: 70vh; /* Mehr Platz auf sehr kleinen Bildschirmen */
+  }
+
+  /* Verbesserte Anfrage-Elemente für mobile Ansicht */
+  .request-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .request-date,
+  .status-badge {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .request-details {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .request-count {
+    margin-bottom: 4px;
+  }
+}
+
+/* Verbesserte Darstellung für Tablets und größere Mobilgeräte */
+@media (min-width: 480px) and (max-width: 768px) {
+  .request-details {
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .request-count {
+    margin-right: 12px;
+  }
+}
+
+/* Verbesserte Touch-Ziele für mobile Geräte */
+@media (max-width: 768px) {
+  .tab-btn {
+    padding: 12px 14px;
+    min-height: 44px; /* Mindesthöhe für bessere Touch-Ziele */
+  }
+
+  .cancel-request-btn {
+    min-height: 36px; /* Mindesthöhe für bessere Touch-Ziele */
+  }
+
+  .modal-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .count-control {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Größere Abstände zwischen Elementen für bessere Lesbarkeit */
+  .request-item {
+    margin-bottom: 10px;
+    padding: 14px;
+  }
+
+  /* Verbesserte Scrollbarkeit */
+  .screen-content,
+  .card-body,
+  .tab-content {
+    scrollbar-width: thin;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+  }
+}
