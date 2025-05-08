@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fd7e14">
+  <title>Benachrichtigungen</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/notification-styles.css">
+  <!-- Font Awesome für Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Verbesserte Styles für die Benachrichtigungsseite */
+    :root {
+      --primary: #fd7e14;
+      --primary-light: rgba(253, 126, 20, 0.1);
+      --primary-dark: #e06910;
+      --text-color: #1e293b;
+      --text-secondary: #64748b;
+      --background: #f8fafc;
+      --card-bg: #ffffff;
+      --border: rgba(0, 0, 0, 0.1);
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Verbesserte Styles für den Zurück-Button */
+    .back-button {
+      background: var(--card-bg);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      margin-right: 15px;
+    }
+
+    .back-button:hover, .back-button:focus {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .back-button:active {
+      transform: translateY(0);
+    }
+
+    .back-button i {
+      font-size: 18px;
+      color: var(--text-color);
+      transition: var(--transition);
+    }
+
+    .back-button:hover i {
+      color: var(--primary);
+    }
+
+    /* Verbesserte Styles für die Tabs */
+    .tabs {
+      display: flex;
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      padding: 5px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 5px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text-secondary);
+      position: relative;
+      transition: var(--transition);
+      border-radius: 8px;
+      margin: 0 3px;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .tab-btn:before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 3px;
+      background-color: var(--primary);
+      transition: var(--transition);
+      border-radius: 3px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-color);
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .tab-btn.active:before {
+      width: 50%;
+    }
+
+    .tab-counter {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 22px;
+      padding: 0 6px;
+      border-radius: 11px;
+      background-color: var(--primary);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+      transition: var(--transition);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .tab-btn:not(.active) .tab-counter {
+      background-color: #cbd5e1;
+    }
+
+    /* Verbesserte Styles für den Header */
+    .screen-header {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background-color: var(--card-bg);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .screen-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-color);
+      flex: 1;
+    }
+
+    /* Verbesserte Styles für den "Alle als gelesen markieren"-Button */
+    .icon-button {
+      background: var(--card-bg);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+
+    .icon-button:hover, .icon-button:focus {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .icon-button:active {
+      transform: translateY(0);
+    }
+
+    .icon-button i {
+      font-size: 18px;
+      color: var(--text-color);
+      transition: var(--transition);
+    }
+
+    .icon-button:hover i {
+      color: var(--primary);
+    }
+
+    /* Verbesserte Styles für die Benachrichtigungsliste */
+    .notification-list {
+      padding: 0 16px;
+    }
+
+    .notification-item {
+      margin-bottom: 16px;
+      border-radius: 12px;
+      transition: var(--transition);
+      overflow: hidden;
+    }
+
+    .notification-item:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    /* Verbesserte Styles für den Inhalt */
+    .screen-content {
+      padding: 16px 0;
+      height: calc(100vh - 72px);
+      overflow-y: auto;
+    }
+
+    /* Verbesserte Styles für den leeren Zustand */
+    .empty-notification {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      margin: 0 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .empty-notification i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #cbd5e1;
+    }
+
+    .empty-notification p {
+      font-size: 16px;
+      margin: 8px 0;
+    }
+
+    /* Verbesserte Styles für die Ladeanimation */
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 0;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--primary-light);
+      border-top: 3px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Verbesserte Styles für die Aktionsbuttons */
+    .mark-read-btn,
+    .delete-btn {
+      background: var(--card-bg);
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+
+    .mark-read-btn:hover {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      transform: scale(1.1);
+    }
+
+    .delete-btn:hover {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      transform: scale(1.1);
+    }
+
+    .mark-read-btn:active,
+    .delete-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Anpassungen für die Benachrichtigungselemente */
+    .notification-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .notification-message {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .notification-sender {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background-color: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 500;
+      margin-left: 8px;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px);
+      transition: all 0.3s ease;
+      padding: 16px;
+      display: none;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background-color: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 350px;
+      max-height: 90vh;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #f8f9fa;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .modal-close:hover {
+      color: #ef4444;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .modal-body {
+      padding: 16px;
+      overflow-y: auto;
+      flex-grow: 1;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      background-color: #f8f9fa;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-danger {
+      background-color: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: #dc2626;
+    }
+
+    .warning-icon {
+      width: 64px;
+      height: 64px;
+      background-color: #f59e0b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 16px rgba(245, 158, 11, 0.2);
+    }
+
+    .warning-icon i {
+      color: white;
+      font-size: 32px;
+    }
+
+    .delete-confirm-message {
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .delete-details {
+      margin-top: 12px;
+      padding: 8px;
+      background-color: #f8fafc;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Responsive Anpassungen */
+    @media (max-width: 480px) {
+      .tabs {
+        margin: 0 16px 20px 16px;
+      }
+      
+      .tab-btn {
+        padding: 10px 5px;
+        font-size: 14px;
+      }
+      
+      .tab-counter {
+        min-width: 20px;
+        height: 20px;
+        font-size: 11px;
+        margin-left: 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Benachrichtigungen-Bereich -->
+    <div id="notifications-screen" class="screen">
+      <div class="screen-header">
+        <button class="back-button" id="backButton">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2>Benachrichtigungen</h2>
+        <button id="markAllReadButton" class="icon-button" title="Alle als gelesen markieren">
+          <i class="fas fa-check-double"></i>
+        </button>
+      </div>
+
+      <div class="screen-content">
+        <!-- Filter-Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="all">
+            Alle
+            <span class="tab-counter" id="allTabCounter">0</span>
+          </button>
+          <button class="tab-btn" data-tab="unread">
+            Ungelesen
+            <span class="tab-counter" id="unreadTabCounter">0</span>
+          </button>
+          <button class="tab-btn" data-tab="read">
+            Gelesen
+            <span class="tab-counter" id="readTabCounter">0</span>
+          </button>
+        </div>
+        
+        <!-- Benachrichtigungsliste -->
+        <div id="notificationsList" class="notification-list">
+          <!-- Benachrichtigungen werden hier dynamisch eingefügt -->
+        </div>
+        
+        <!-- Leerer Zustand -->
+        <div id="emptyState" class="empty-notification hidden">
+          <i class="fas fa-bell-slash"></i>
+          <p>Keine Benachrichtigungen vorhanden</p>
+        </div>
+        
+        <!-- Lade-Anzeige -->
+        <div id="loadingNotifications" class="loading-container hidden">
+          <div class="spinner"></div>
+          <p>Benachrichtigungen werden geladen...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Löschen-Bestätigungsmodal -->
+    <div id="deleteConfirmModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Benachrichtigung löschen</h3>
+          <button class="modal-close" id="closeDeleteConfirmModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="delete-confirm-message">
+            <div class="warning-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <p>Möchten Sie diese Benachrichtigung wirklich löschen?</p>
+            <p class="delete-details" id="deleteNotificationDetails"></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="cancelDeleteBtn">Abbrechen</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn">
+            <i class="fas fa-trash"></i> Löschen
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ladebildschirm -->
+    <div id="loading-screen" class="loading-screen hidden">
+      <div class="spinner"></div>
+      <p>Wird geladen...</p>
+    </div>
+    
+    <!-- Benachrichtigungston -->
+    <audio id="notificationSound" class="notification-sound">
+      <source src="sounds/notification.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <!-- Skripte -->
+  <script>
+    // Supabase-Client initialisieren
+    const supabaseUrl = "https://ggowwdhzpqwjlxaadaff.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdnb3d3ZGh6cHF3amx4YWFkYWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MjI1MzcsImV4cCI6MjA1Njk5ODUzN30.XxCVgVq9MqDeJl8oyolJLo0XHOwloTlRw7ya4Kr4HAM";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    
+    // Globale Variablen für die Synchronisation
+    window.notificationEvents = {
+      markAsRead: new EventTarget(),
+      markAllAsRead: new EventTarget(),
+      deleteNotification: new EventTarget()
+    };
+
+    // Warten, bis das DOM geladen ist
+    document.addEventListener('DOMContentLoaded', async () => {
+      // DOM-Elemente
+      const notificationsList = document.getElementById('notificationsList');
+      const emptyState = document.getElementById('emptyState');
+      const loadingState = document.getElementById('loadingNotifications');
+      const filterButtons = document.querySelectorAll('.tab-btn');
+      const markAllReadBtn = document.getElementById('markAllReadButton');
+      const backButton = document.getElementById('backButton');
+      
+      // Modal-Elemente
+      const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+      const closeDeleteConfirmModal = document.getElementById('closeDeleteConfirmModal');
+      const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+      const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+      const deleteNotificationDetails = document.getElementById('deleteNotificationDetails');
+      
+      // Variablen für Filterung und Löschen
+      let activeTab = 'all';
+      let notifications = [];
+      let currentNotificationToDelete = null;
+      
+      // Event-Listener für Zurück-Button
+      if (backButton) {
+        backButton.addEventListener('click', () => {
+          window.location.href = "index.html";
+        });
+      }
+      
+      // Event-Listener für Modal-Schließen
+      if (closeDeleteConfirmModal) {
+        closeDeleteConfirmModal.addEventListener('click', () => {
+          deleteConfirmModal.classList.remove('show');
+          currentNotificationToDelete = null;
+        });
+      }
+      
+      // Event-Listener für Abbrechen-Button im Modal
+      if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', () => {
+          deleteConfirmModal.classList.remove('show');
+          currentNotificationToDelete = null;
+        });
+      }
+      
+      // Event-Listener für Bestätigen-Button im Modal
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', () => {
+          if (currentNotificationToDelete) {
+            deleteNotification(currentNotificationToDelete);
+            deleteConfirmModal.classList.remove('show');
+            currentNotificationToDelete = null;
+          }
+        });
+      }
+      
+      // Löschbestätigung anzeigen
+      function showDeleteConfirmation(notification) {
+        // Details für die Bestätigung setzen
+        currentNotificationToDelete = notification.id;
+        
+        // Benachrichtigungsdetails anzeigen
+        if (deleteNotificationDetails) {
+          deleteNotificationDetails.textContent = `"${notification.title || 'Keine Überschrift'}"`;
+        }
+        
+        // Modal anzeigen
+        deleteConfirmModal.classList.add('show');
+      }
+      
+      // Benachrichtigungen laden
+      async function loadNotifications() {
+        if (!notificationsList || !emptyState || !loadingState) return;
+        
+        // Lade-Anzeige einblenden
+        loadingState.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+        notificationsList.innerHTML = '';
+        
+        try {
+          // Prüfe, ob der Benutzer angemeldet ist
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error("Fehler beim Abrufen der Session:", sessionError);
+            throw sessionError;
+          }
+          
+          if (!session) {
+            console.error("Keine aktive Sitzung gefunden");
+            emptyState.classList.remove('hidden');
+            emptyState.querySelector('p').textContent = "Bitte melden Sie sich an, um Benachrichtigungen zu sehen.";
+            return;
+          }
+          
+          console.log("Benutzer angemeldet mit ID:", session.user.id);
+          
+          // Benachrichtigungen direkt aus Supabase laden
+          const { data, error } = await supabase
+            .from("notifications")
+            .select("*")
+            .eq("agent_id", session.user.id)
+            .order("created_at", { ascending: false });
+          
+          if (error) {
+            console.error("Fehler beim Laden der Benachrichtigungen:", error);
+            throw error;
+          }
+          
+          notifications = data || [];
+          console.log("Geladene Benachrichtigungen:", notifications);
+          
+          // Filtern nach Tab
+          let filteredNotifications = [...notifications];
+          if (activeTab === 'unread') {
+            filteredNotifications = filteredNotifications.filter(n => !n.read);
+          } else if (activeTab === 'read') {
+            filteredNotifications = filteredNotifications.filter(n => n.read);
+          }
+          
+          // Tab-Zähler aktualisieren
+          updateTabCounters();
+          
+          // Anzeigen
+          if (filteredNotifications.length === 0) {
+            emptyState.classList.remove('hidden');
+          } else {
+            renderNotifications(filteredNotifications);
+          }
+        } catch (error) {
+          console.error("Fehler beim Laden der Benachrichtigungen:", error);
+          emptyState.classList.remove('hidden');
+          emptyState.querySelector('p').textContent = "Fehler beim Laden der Benachrichtigungen.";
+        } finally {
+          // Lade-Anzeige ausblenden
+          loadingState.classList.add('hidden');
+        }
+      }
+      
+      // Tab-Zähler aktualisieren
+      function updateTabCounters() {
+        const allCount = notifications.length;
+        const unreadCount = notifications.filter(n => !n.read).length;
+        const readCount = notifications.filter(n => n.read).length;
+        
+        document.getElementById('allTabCounter').textContent = allCount.toString();
+        document.getElementById('unreadTabCounter').textContent = unreadCount.toString();
+        document.getElementById('readTabCounter').textContent = readCount.toString();
+      }
+      
+      // Benachrichtigungen rendern
+      function renderNotifications(notifications) {
+        notificationsList.innerHTML = '';
+        
+        notifications.forEach(notification => {
+          const item = createNotificationItem(notification);
+          notificationsList.appendChild(item);
+        });
+      }
+      
+      // Einzelne Benachrichtigung erstellen
+      function createNotificationItem(notification) {
+        const item = document.createElement('div');
+        item.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
+        item.dataset.id = notification.id;
+        
+        // Datum formatieren
+        const date = new Date(notification.created_at);
+        const formattedDate = date.toLocaleDateString('de-DE', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        
+        item.innerHTML = `
+          <div class="notification-content">
+            <div class="notification-title">${notification.title || 'Keine Überschrift'}</div>
+            <div class="notification-message">${notification.message || 'Keine Nachricht'}</div>
+            <div class="notification-meta">
+              <div>
+                <span class="notification-time">${formattedDate}</span>
+                <span class="notification-sender">${notification.absender || notification.sender || 'System'}</span>
+              </div>
+              <span class="notification-status">${notification.read ? 'Gelesen' : 'Ungelesen'}</span>
+            </div>
+          </div>
+          <div class="notification-actions">
+            ${!notification.read ? `
+              <button class="mark-read-btn" title="Als gelesen markieren">
+                <i class="fas fa-check"></i>
+              </button>
+            ` : ''}
+            <button class="delete-btn" title="Löschen">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        
+        // Event-Listener für Aktionen
+        const markReadBtn = item.querySelector('.mark-read-btn');
+        if (markReadBtn) {
+          markReadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            markAsRead(notification.id);
+          });
+        }
+        
+        const deleteBtn = item.querySelector('.delete-btn');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showDeleteConfirmation(notification);
+          });
+        }
+        
+        // Klick auf die Benachrichtigung markiert sie als gelesen
+        item.addEventListener('click', () => {
+          if (!notification.read) {
+            markAsRead(notification.id);
+          }
+        });
+        
+        return item;
+      }
+      
+      // Benachrichtigung als gelesen markieren
+      async function markAsRead(notificationId) {
+        try {
+          const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('id', notificationId);
+          
+          if (error) throw error;
+          
+          // Benachrichtigungen neu laden
+          loadNotifications();
+          
+          // Event auslösen
+          window.dispatchEvent(new CustomEvent('notification-read', { detail: { id: notificationId } }));
+        } catch (error) {
+          console.error('Fehler beim Markieren als gelesen:', error);
+          alert('Fehler beim Markieren als gelesen: ' + error.message);
+        }
+      }
+      
+      // Alle Benachrichtigungen als gelesen markieren
+      async function markAllAsRead() {
+        try {
+          // Benutzer-ID abrufen
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
+          
+          const { error } = await supabase
+            .from('notifications')
+            .update({ read: true })
+            .eq('agent_id', session.user.id)
+            .eq('read', false);
+          
+          if (error) throw error;
+          
+          // Benachrichtigungen neu laden
+          loadNotifications();
+          
+          // Event auslösen
+          window.dispatchEvent(new CustomEvent('notification-all-read'));
+        } catch (error) {
+          console.error('Fehler beim Markieren aller als gelesen:', error);
+          alert('Fehler beim Markieren aller als gelesen: ' + error.message);
+        }
+      }
+      
+      // Benachrichtigung löschen
+      async function deleteNotification(notificationId) {
+        try {
+          const { error } = await supabase
+            .from('notifications')
+            .delete()
+            .eq('id', notificationId);
+          
+          if (error) throw error;
+          
+          // Benachrichtigungen neu laden
+          loadNotifications();
+          
+          // Event auslösen
+          window.dispatchEvent(new CustomEvent('notification-deleted', { detail: { id: notificationId } }));
+        } catch (error) {
+          console.error('Fehler beim Löschen der Benachrichtigung:', error);
+          alert('Fehler beim Löschen der Benachrichtigung: ' + error.message);
+        }
+      }
+      
+      // Event-Listener für Tabs
+      filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          // Aktiven Tab markieren
+          filterButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          
+          // Filter setzen und Benachrichtigungen neu laden
+          activeTab = button.getAttribute('data-tab');
+          loadNotifications();
+        });
+      });
+      
+      // Event-Listener für "Alle als gelesen markieren"-Button
+      if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', markAllAsRead);
+      }
+      
+      // Initialisierung
+      loadNotifications();
+      
+      // Event-Listener für Benachrichtigungsereignisse
+      window.addEventListener('notification-read', () => {
+        loadNotifications();
+      });
+      
+      window.addEventListener('notification-all-read', () => {
+        loadNotifications();
+      });
+      
+      window.addEventListener('notification-deleted', () => {
+        loadNotifications();
+      });
+    });
+  </script>
+</body>
+</html>

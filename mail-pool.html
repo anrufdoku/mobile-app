@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fd7e14">
+  <title>Mail-Pool</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/mail-pool.css">
+  <!-- Font Awesome für Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Mail-Pool-Bereich -->
+    <div id="mail-pool-screen" class="screen">
+      <div class="screen-header">
+        <button class="back-button" id="backButton">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2>Mail-Pool</h2>
+      </div>
+
+      <div class="screen-content">
+        <!-- Statistik-Karten -->
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Verfügbar</h3>
+              <div class="stat-value" id="availableMailsCount">0</div>
+              <div class="stat-description">Im Pool</div>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-gauge-high"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Limit</h3>
+              <div class="stat-value" id="dailyLimitDisplay">0</div>
+              <div class="stat-description">Pro Tag</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Angefordert</h3>
+              <div class="stat-value" id="todayProcessedDisplay">0</div>
+              <div class="stat-description">Heute</div>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Verbleibend</h3>
+              <div class="stat-value" id="remainingLimitDisplay">0</div>
+              <div class="stat-description">Heute</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Anfrage-Button -->
+        <div class="request-button-container">
+          <button id="requestMailsBtn" class="request-button">
+            <i class="fas fa-envelope-open-text"></i>
+            Mails anfordern
+          </button>
+        </div>
+        
+        <!-- Anfragen-Tabs -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Meine Anfragen</h3>
+          </div>
+          <div class="card-body">
+            <!-- Tabs für Alle/Offen/Genehmigt/Abgelehnt -->
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="all">
+                Alle
+                <span class="tab-counter" id="allTabCounter">0</span>
+              </button>
+              <button class="tab-btn" data-tab="pending">
+                Offen
+                <span class="tab-counter" id="pendingTabCounter">0</span>
+              </button>
+              <button class="tab-btn" data-tab="approved">
+                Genehmigt
+                <span class="tab-counter" id="approvedTabCounter">0</span>
+              </button>
+              <button class="tab-btn" data-tab="rejected">
+                Abgelehnt
+                <span class="tab-counter" id="rejectedTabCounter">0</span>
+              </button>
+            </div>
+            
+            <!-- Tab-Inhalte -->
+            <div class="tab-content active" id="allTab">
+              <div id="allRequestsList" class="request-list">
+                <!-- Anfragen werden hier dynamisch eingefügt -->
+              </div>
+            </div>
+            
+            <div class="tab-content" id="pendingTab">
+              <div id="pendingRequestsList" class="request-list">
+                <!-- Offene Anfragen werden hier dynamisch eingefügt -->
+              </div>
+            </div>
+            
+            <div class="tab-content" id="approvedTab">
+              <div id="approvedRequestsList" class="request-list">
+                <!-- Genehmigte Anfragen werden hier dynamisch eingefügt -->
+              </div>
+            </div>
+            
+            <div class="tab-content" id="rejectedTab">
+              <div id="rejectedRequestsList" class="request-list">
+                <!-- Abgelehnte Anfragen werden hier dynamisch eingefügt -->
+              </div>
+            </div>
+            
+            <div id="emptyState" class="empty-state">
+              <i class="fas fa-inbox"></i>
+              <p>Keine Anfragen vorhanden. Fordern Sie oben neue Mails an.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Anfrage-Modal -->
+    <div id="requestMailsModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Mails anfordern</h3>
+          <button class="modal-close" id="closeRequestMailsModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="mail-request-info">
+            <div class="mail-info-item">
+              <span class="mail-info-label">Verfügbare Mails:</span>
+              <span class="mail-info-value" id="modalAvailableMails">0</span>
+            </div>
+            <div class="mail-info-item">
+              <span class="mail-info-label">Ihr tägliches Limit:</span>
+              <span class="mail-info-value" id="modalDailyLimit">0</span>
+            </div>
+            <div class="mail-info-item">
+              <span class="mail-info-label">Heute bereits angefordert:</span>
+              <span class="mail-info-value" id="modalProcessed">0</span>
+            </div>
+            <div class="mail-info-item">
+              <span class="mail-info-label">Verbleibend:</span>
+              <span class="mail-info-value" id="modalRemaining">0</span>
+            </div>
+          </div>
+          
+          <form id="requestMailsForm">
+            <div class="form-group">
+              <label for="requestCount">Anzahl der Mails:</label>
+              <div class="request-count-container">
+                <input type="number" id="requestCount" class="form-input" min="1" value="1">
+                <div class="request-count-controls">
+                  <button type="button" class="count-control" id="increaseCount">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                  <button type="button" class="count-control" id="decreaseCount">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                </div>
+              </div>
+              <small id="requestCountHelp">Maximal <span id="maxRequestCount">0</span> Mails verfügbar</small>
+            </div>
+            <div class="form-group">
+              <label for="requestNotes">Notizen (optional):</label>
+              <textarea id="requestNotes" class="form-textarea" rows="3" placeholder="Zusätzliche Informationen zu Ihrer Anfrage..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="cancelRequestMails">Abbrechen</button>
+          <button class="btn btn-primary" id="submitRequestMails">
+            <i class="fas fa-paper-plane"></i> Anfragen
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Erfolgsmodal -->
+    <div id="successModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="successTitle">Anfrage gesendet!</h3>
+          <button class="modal-close" id="closeSuccessModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="success-message">
+            <div class="success-icon">
+              <i class="fas fa-check"></i>
+            </div>
+            <p id="successMessage">Ihre Anfrage wurde erfolgreich gesendet und wird in Kürze bearbeitet.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="closeSuccessBtn">Schließen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stornieren-Bestätigungsmodal -->
+    <div id="cancelConfirmModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Anfrage stornieren</h3>
+          <button class="modal-close" id="closeCancelConfirmModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="cancel-confirm-message">
+            <div class="warning-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <p>Möchten Sie diese Anfrage wirklich stornieren?</p>
+            <p class="cancel-details" id="cancelRequestDetails"></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="cancelCancelBtn">Abbrechen</button>
+          <button class="btn btn-danger" id="confirmCancelBtn">
+            <i class="fas fa-times"></i> Stornieren
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ladebildschirm -->
+    <div id="loading-screen" class="loading-screen hidden">
+      <div class="spinner"></div>
+      <p>Wird geladen...</p>
+    </div>
+
+    <!-- Benachrichtigung -->
+    <div id="notification" class="notification"></div>
+  </div>
+
+  <script src="js/mail-pool.js"></script>
+</body>
+</html>

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fd7e14">
+  <title>Profil</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Font Awesome für Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Zusätzliche Styles für die Profilseite */
+    :root {
+      --primary: #fd7e14;
+      --primary-light: rgba(253, 126, 20, 0.1);
+      --primary-dark: #e06910;
+      --text-color: #1e293b;
+      --text-secondary: #64748b;
+      --background: #f8fafc;
+      --card-bg: #ffffff;
+      --border: rgba(0, 0, 0, 0.1);
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Verbesserte Styles für den Zurück-Button */
+    .back-button {
+      background: var(--card-bg);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+      margin-right: 15px;
+    }
+
+    .back-button:hover, .back-button:focus {
+      background-color: var(--primary-light);
+      color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .back-button:active {
+      transform: translateY(0);
+    }
+
+    .back-button i {
+      font-size: 18px;
+      color: var(--text-color);
+      transition: var(--transition);
+    }
+
+    .back-button:hover i {
+      color: var(--primary);
+    }
+
+    /* Verbesserte Styles für den Header */
+    .screen-header {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background-color: var(--card-bg);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .screen-header h2 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-color);
+      flex: 1;
+    }
+
+    /* Styles für den Profilbereich */
+    .profile-container {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .profile-header {
+      background-color: var(--primary);
+      border-radius: 16px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .profile-header-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      opacity: 0.8;
+      z-index: 0;
+    }
+
+    .profile-header-pattern {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 8%),
+                        radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 8%);
+      background-size: 30px 30px;
+      opacity: 0.3;
+      z-index: 1;
+    }
+
+    .profile-avatar-container {
+      position: relative;
+      z-index: 2;
+      margin-bottom: 16px;
+    }
+
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 60px;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: bold;
+      color: var(--primary);
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-info {
+      text-align: center;
+      color: white;
+      position: relative;
+      z-index: 2;
+    }
+
+    .profile-name {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .profile-email {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .profile-details {
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .profile-section {
+      margin-bottom: 24px;
+    }
+
+    .profile-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .profile-section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+    }
+
+    .profile-section-title i {
+      margin-right: 10px;
+    }
+
+    .profile-detail-item {
+      display: flex;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .profile-detail-item:last-child {
+      border-bottom: none;
+    }
+
+    .profile-detail-label {
+      width: 40%;
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .profile-detail-value {
+      width: 60%;
+      font-size: 14px;
+      color: var(--text-color);
+      font-weight: 500;
+    }
+
+    .profile-actions {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .profile-action-button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+
+    .profile-action-button:hover {
+      background-color: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .profile-action-button:active {
+      transform: translateY(0);
+    }
+
+    .profile-action-button i {
+      margin-right: 8px;
+    }
+
+    /* Ladebildschirm */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(253, 126, 20, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive Anpassungen */
+    @media (max-width: 480px) {
+      .profile-header {
+        padding: 20px;
+      }
+      
+      .profile-avatar {
+        width: 100px;
+        height: 100px;
+        font-size: 40px;
+      }
+      
+      .profile-name {
+        font-size: 20px;
+      }
+      
+      .profile-email {
+        font-size: 14px;
+      }
+      
+      .profile-detail-item {
+        flex-direction: column;
+      }
+      
+      .profile-detail-label,
+      .profile-detail-value {
+        width: 100%;
+      }
+      
+      .profile-detail-label {
+        margin-bottom: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Profil-Bereich -->
+    <div id="profile-screen" class="screen">
+      <div class="screen-header">
+        <button class="back-button" id="backButton">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <h2>Profil</h2>
+      </div>
+
+      <div class="profile-container">
+        <!-- Profil-Header mit Avatar und Name -->
+        <div class="profile-header">
+          <div class="profile-header-bg"></div>
+          <div class="profile-header-pattern"></div>
+          <div class="profile-avatar-container">
+            <div class="profile-avatar" id="profile-avatar">EM</div>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name" id="profile-name">Benutzer</div>
+            <div class="profile-email" id="profile-email">benutzer@example.com</div>
+          </div>
+        </div>
+
+        <!-- Profil-Details -->
+        <div class="profile-details">
+          <!-- Persönliche Informationen -->
+          <div class="profile-section">
+            <div class="profile-section-title">
+              <i class="fas fa-user"></i> Persönliche Informationen
+            </div>
+            <div class="profile-detail-item">
+              <div class="profile-detail-label">Erstellungsdatum</div>
+              <div class="profile-detail-value" id="profile-created">-</div>
+            </div>
+            <div class="profile-detail-item">
+              <div class="profile-detail-label">Standort</div>
+              <div class="profile-detail-value" id="profile-location">-</div>
+            </div>
+          </div>
+
+          <!-- Arbeitsinformationen -->
+          <div class="profile-section">
+            <div class="profile-section-title">
+              <i class="fas fa-briefcase"></i> Arbeitsinformationen
+            </div>
+            <div class="profile-detail-item">
+              <div class="profile-detail-label">Login ID</div>
+              <div class="profile-detail-value" id="profile-login-id">-</div>
+            </div>
+            <div class="profile-detail-item">
+              <div class="profile-detail-label">Mail-Team</div>
+              <div class="profile-detail-value" id="profile-mail-team">-</div>
+            </div>
+            <div class="profile-detail-item">
+              <div class="profile-detail-label">Supervisor</div>
+              <div class="profile-detail-value" id="profile-supervisor">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profil-Aktionen -->
+        <div class="profile-actions">
+          <button id="logout-button" class="profile-action-button">
+            <i class="fas fa-sign-out-alt"></i> Abmelden
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ladebildschirm -->
+    <div id="loading-screen" class="loading-screen hidden">
+      <div class="spinner"></div>
+      <p>Wird geladen...</p>
+    </div>
+  </div>
+
+  <!-- Skripte -->
+  <script>
+    // Supabase-Client initialisieren
+    const supabaseUrl = "https://ggowwdhzpqwjlxaadaff.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdnb3d3ZGh6cHF3amx4YWFkYWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MjI1MzcsImV4cCI6MjA1Njk5ODUzN30.XxCVgVq9MqDeJl8oyolJLo0XHOwloTlRw7ya4Kr4HAM";
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // Warten, bis das DOM geladen ist
+    document.addEventListener('DOMContentLoaded', async () => {
+      // DOM-Elemente
+      const backButton = document.getElementById('backButton');
+      const logoutButton = document.getElementById('logout-button');
+      const loadingScreen = document.getElementById('loading-screen');
+      
+      // Event-Listener für Zurück-Button
+      if (backButton) {
+        backButton.addEventListener('click', () => {
+          window.location.href = "index.html";
+        });
+      }
+      
+      // Event-Listener für Abmelden-Button
+      if (logoutButton) {
+        logoutButton.addEventListener('click', handleLogout);
+      }
+      
+      // Benutzerinformationen laden
+      await loadUserInfo();
+    });
+    
+    // Benutzerinformationen laden
+    async function loadUserInfo() {
+      showLoading();
+      
+      try {
+        // Hole Benutzerdaten
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error("Fehler beim Laden des Benutzers:", userError);
+          throw userError;
+        }
+        
+        if (!user) {
+          // Benutzer ist nicht angemeldet, zurück zur Login-Seite
+          window.location.href = "index.html";
+          return;
+        }
+        
+        // Hole Benutzerdetails aus der Datenbank
+        const { data: userDetails, error } = await supabase
+          .from("agents")
+          .select("*")
+          .eq("email", user.email)
+          .single();
+        
+        if (error && error.code !== "PGRST116") {
+          console.error("Fehler beim Laden der Benutzerdetails:", error);
+        }
+        
+        // Aktualisiere UI mit Benutzerdaten
+        updateUserUI(user, userDetails);
+      } catch (error) {
+        console.error("Fehler beim Laden des Profils:", error);
+        alert("Fehler beim Laden des Profils. Bitte versuchen Sie es erneut.");
+      } finally {
+        hideLoading();
+      }
+    }
+    
+    // Aktualisiere die Benutzeroberfläche mit Benutzerdaten
+    function updateUserUI(user, userDetails) {
+      const details = userDetails || {};
+      const name = details.name || user.email?.split("@")[0] || "Benutzer";
+      const initials = getInitials(name);
+      
+      // Profil-Header
+      document.getElementById("profile-name").textContent = name;
+      document.getElementById("profile-email").textContent = user.email;
+      document.getElementById("profile-avatar").textContent = initials;
+      
+      // Profil-Details
+      document.getElementById("profile-created").textContent = formatDate(details.created_at) || "Nicht verfügbar";
+      document.getElementById("profile-location").textContent = details.standort || "Nicht angegeben";
+      document.getElementById("profile-login-id").textContent = details.login_id || "Nicht verfügbar";
+      document.getElementById("profile-mail-team").textContent = details.mail_team || "Nicht zugewiesen";
+      document.getElementById("profile-supervisor").textContent = details.supervisor || "Nicht zugewiesen";
+    }
+    
+    // Abmelden
+    async function handleLogout() {
+      showLoading();
+      
+      try {
+        await supabase.auth.signOut();
+        window.location.href = "index.html";
+      } catch (error) {
+        console.error("Fehler beim Abmelden:", error);
+        alert("Fehler beim Abmelden. Bitte versuchen Sie es erneut.");
+        hideLoading();
+      }
+    }
+    
+    // Hilfsfunktionen
+    function getInitials(name) {
+      if (!name) return "?";
+      
+      const nameParts = name.split(" ");
+      if (nameParts.length >= 2) {
+        return nameParts[0].charAt(0) + nameParts[1].charAt(0);
+      }
+      return name.charAt(0);
+    }
+    
+    function formatDate(dateString) {
+      if (!dateString) return null;
+      
+      const date = new Date(dateString);
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      return date.toLocaleDateString("de-DE", options);
+    }
+    
+    // Lade-Anzeige
+    function showLoading() {
+      document.getElementById("loading-screen").classList.remove("hidden");
+    }
+    
+    function hideLoading() {
+      document.getElementById("loading-screen").classList.add("hidden");
+    }
+  </script>
+</body>
+</html>

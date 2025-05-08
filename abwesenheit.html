@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fd7e14">
+  <title>Abwesenheit</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- Font Awesome für Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Zusätzliche Styles für die Abwesenheit-Seite */
+    .page-header {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background-color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    /* Verbesserte Zurück-Button-Darstellung wie in mail-pool und profile */
+    .back-button {
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      padding: 8px;
+      margin-right: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      transition: transform 0.2s;
+    }
+
+    .back-button:hover {
+      transform: translateX(-2px);
+    }
+
+    .page-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .content-container {
+      padding: 16px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-color);
+    }
+
+    /* Statistik-Karten */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .stats-container {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat-card {
+      background-color: white;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .stat-card:nth-child(1)::before {
+      background-color: #ef4444;
+    }
+
+    .stat-card:nth-child(2)::before {
+      background-color: #3b82f6;
+    }
+
+    .stat-card:nth-child(3)::before {
+      background-color: #8b5cf6;
+    }
+
+    .stat-card:nth-child(4)::before {
+      background-color: #10b981;
+    }
+
+    .stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .stat-card:nth-child(1) .stat-icon {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+    }
+
+    .stat-card:nth-child(2) .stat-icon {
+      background-color: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+    }
+
+    .stat-card:nth-child(3) .stat-icon {
+      background-color: rgba(139, 92, 246, 0.1);
+      color: #8b5cf6;
+    }
+
+    .stat-card:nth-child(4) .stat-icon {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+    }
+
+    .stat-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-color);
+    }
+
+    /* Abwesenheitstyp-Auswahl */
+    .absence-type-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    @media (min-width: 640px) {
+      .absence-type-selector {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .absence-option {
+      position: relative;
+    }
+
+    .absence-input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .absence-label {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background-color: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .absence-input:checked + .absence-label {
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+    }
+
+    .absence-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 8px;
+      color: white;
+    }
+
+    .absence-krank .absence-icon {
+      background-color: #ef4444;
+    }
+
+    .absence-urlaub .absence-icon {
+      background-color: #3b82f6;
+    }
+
+    .absence-sonstiges .absence-icon {
+      background-color: #8b5cf6;
+    }
+
+    .absence-schulung .absence-icon {
+      background-color: #10b981;
+    }
+
+    .absence-text {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Datumsauswahl */
+    .date-range {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .date-field {
+      flex: 1;
+    }
+
+    .date-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .date-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    /* Abwesenheitsliste */
+    .absence-list {
+      margin-top: 24px;
+    }
+
+    .absence-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .absence-item:last-child {
+      border-bottom: none;
+    }
+
+    .absence-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .absence-type {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .absence-date {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .absence-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .absence-action {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      font-size: 16px;
+      transition: color 0.2s;
+    }
+
+    .absence-action:hover {
+      color: var(--primary);
+    }
+
+    .absence-action.delete:hover {
+      color: #ef4444;
+    }
+
+    /* Kalender */
+    .calendar {
+      margin-top: 24px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .calendar-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .calendar-nav-btn {
+      background: none;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .calendar-nav-btn:hover {
+      background-color: #f8fafc;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-day-header {
+      text-align: center;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 8px 0;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      padding: 4px;
+      border-radius: 4px;
+      background-color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .calendar-day:hover {
+      background-color: #f1f5f9;
+    }
+
+    .calendar-day.other-month {
+      opacity: 0.5;
+    }
+
+    .calendar-day.today {
+      background-color: var(--primary-light);
+    }
+
+    .calendar-day-number {
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .calendar-day.today .calendar-day-number {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .absence-indicator {
+      height: 4px;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+
+    .absence-indicator.krank {
+      background-color: #ef4444;
+    }
+
+    .absence-indicator.urlaub {
+      background-color: #3b82f6;
+    }
+
+    .absence-indicator.sonstiges {
+      background-color: #8b5cf6;
+    }
+
+    .absence-indicator.schulung {
+      background-color: #10b981;
+    }
+
+    /* Leerer Zustand */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      max-width: 300px;
+    }
+
+    /* Toast-Benachrichtigung */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #10b981;
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, -10px);
+    }
+
+    .toast i {
+      font-size: 18px;
+    }
+
+    /* Ladeanimation */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(253, 126, 20, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Abwesenheitstyp-Badge */
+    .absence-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+    }
+
+    .absence-badge.krank {
+      background-color: #ef4444;
+    }
+
+    .absence-badge.urlaub {
+      background-color: #3b82f6;
+    }
+
+    .absence-badge.sonstiges {
+      background-color: #8b5cf6;
+    }
+
+    .absence-badge.schulung {
+      background-color: #10b981;
+    }
+
+    /* Verbesserte Formular-Aktionen mit sichtbarem Speichern-Button */
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary {
+      background-color: #f1f5f9;
+      color: var(--text-color);
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+    }
+
+    /* Verbesserte Darstellung des Speichern-Buttons */
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary:hover {
+      background-color: #e06910;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-primary:disabled {
+      background-color: #cbd5e1;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Verbesserte Modal-Darstellung wie in mail-pool */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background-color: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .modal-overlay.show .modal-content {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #64748b;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: #1e293b;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px 20px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    /* Responsive Anpassungen */
+    @media (min-width: 640px) {
+      .content-container {
+        max-width: 640px;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <button class="back-button" id="backButton">
+      <i class="fas fa-arrow-left"></i>
+    </button>
+    <h1 class="page-title">Abwesenheit</h1>
+  </div>
+
+  <div class="content-container">
+    <!-- Statistik-Karten -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-head-side-cough"></i>
+        </div>
+        <div class="stat-title">Krankheitstage</div>
+        <div class="stat-value" id="sickDaysCount">0</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-umbrella-beach"></i>
+        </div>
+        <div class="stat-title">Urlaubstage</div>
+        <div class="stat-value" id="vacationDaysCount">0</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-title">Sonstiges</div>
+        <div class="stat-value" id="otherDaysCount">0</div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-graduation-cap"></i>
+        </div>
+        <div class="stat-title">Schulungstage</div>
+        <div class="stat-value" id="trainingDaysCount">0</div>
+      </div>
+    </div>
+
+    <!-- Abwesenheit eintragen -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Neue Abwesenheit eintragen</h2>
+      </div>
+      
+      <div class="absence-type-selector">
+        <div class="absence-option">
+          <input type="radio" id="absenceTypeKrank" name="absenceType" value="krank" class="absence-input" checked>
+          <label for="absenceTypeKrank" class="absence-label absence-krank">
+            <span class="absence-icon"><i class="fas fa-head-side-cough"></i></span>
+            <span class="absence-text">Krankheit</span>
+          </label>
+        </div>
+        
+        <div class="absence-option">
+          <input type="radio" id="absenceTypeUrlaub" name="absenceType" value="urlaub" class="absence-input">
+          <label for="absenceTypeUrlaub" class="absence-label absence-urlaub">
+            <span class="absence-icon"><i class="fas fa-umbrella-beach"></i></span>
+            <span class="absence-text">Urlaub</span>
+          </label>
+        </div>
+        
+        <div class="absence-option">
+          <input type="radio" id="absenceTypeSonstiges" name="absenceType" value="sonstiges" class="absence-input">
+          <label for="absenceTypeSonstiges" class="absence-label absence-sonstiges">
+            <span class="absence-icon"><i class="fas fa-ellipsis-h"></i></span>
+            <span class="absence-text">Sonstiges</span>
+          </label>
+        </div>
+        
+        <div class="absence-option">
+          <input type="radio" id="absenceTypeSchulung" name="absenceType" value="schulung" class="absence-input">
+          <label for="absenceTypeSchulung" class="absence-label absence-schulung">
+            <span class="absence-icon"><i class="fas fa-graduation-cap"></i></span>
+            <span class="absence-text">Schulung</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="date-range">
+        <div class="date-field">
+          <label for="startDate" class="date-label">Von</label>
+          <input type="date" id="startDate" class="date-input">
+        </div>
+        
+        <div class="date-field">
+          <label for="endDate" class="date-label">Bis</label>
+          <input type="date" id="endDate" class="date-input">
+        </div>
+      </div>
+      
+      <div>
+        <label for="absenceNotes" class="date-label">Bemerkung (optional)</label>
+        <textarea id="absenceNotes" class="date-input" rows="3" placeholder="Zusätzliche Informationen..."></textarea>
+      </div>
+      
+      <div class="form-actions">
+        <button type="button" id="resetButton" class="btn btn-secondary">Zurücksetzen</button>
+        <button type="button" id="saveButton" class="btn btn-primary">
+          <i class="fas fa-save"></i> Speichern
+        </button>
+      </div>
+    </div>
+
+    <!-- Kalender -->
+    <div class="card calendar">
+      <div class="calendar-header">
+        <div class="calendar-title" id="calendarTitle">August 2023</div>
+        <div class="calendar-nav">
+          <button class="calendar-nav-btn" id="prevMonthBtn">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="calendar-nav-btn" id="nextMonthBtn">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- Wochentage-Header -->
+        <div class="calendar-day-header">Mo</div>
+        <div class="calendar-day-header">Di</div>
+        <div class="calendar-day-header">Mi</div>
+        <div class="calendar-day-header">Do</div>
+        <div class="calendar-day-header">Fr</div>
+        <div class="calendar-day-header">Sa</div>
+        <div class="calendar-day-header">So</div>
+        
+        <!-- Kalendertage werden dynamisch eingefügt -->
+      </div>
+    </div>
+
+    <!-- Abwesenheitsliste -->
+    <div class="card absence-list">
+      <div class="card-header">
+        <h2 class="card-title">Meine Abwesenheiten</h2>
+      </div>
+      
+      <div id="absenceListContainer">
+        <!-- Wird dynamisch gefüllt -->
+      </div>
+      
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-state-icon">
+          <i class="fas fa-calendar-plus"></i>
+        </div>
+        <div class="empty-state-text">
+          Keine Abwesenheiten eingetragen. Fügen Sie oben eine neue Abwesenheit hinzu.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast-Benachrichtigung -->
+  <div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <span id="toastMessage">Abwesenheit wurde erfolgreich gespeichert!</span>
+  </div>
+
+  <!-- Ladeanimation -->
+  <div class="loading-overlay hidden" id="loadingOverlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Verbessertes Lösch-Modal im Stil von mail-pool -->
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Abwesenheit löschen</h2>
+        <button class="modal-close" id="closeDeleteModalButton">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="width: 70px; height: 70px; background-color: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <i class="fas fa-trash" style="font-size: 30px; color: #ef4444;"></i>
+          </div>
+          <p id="deleteModalText" style="font-size: 16px; margin-bottom: 8px;">Möchten Sie diese Abwesenheit wirklich löschen?</p>
+          <p style="font-size: 14px; color: #64748b;">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelDeleteButton">Abbrechen</button>
+        <button class="btn btn-primary" style="background-color: #ef4444;" id="confirmDeleteButton">Löschen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Erfolgsmodal -->
+  <div id="successModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Abwesenheit gespeichert</h2>
+        <button class="modal-close" id="closeSuccessModalButton">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="width: 70px; height: 70px; background-color: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+            <i class="fas fa-check" style="font-size: 30px; color: #10b981;"></i>
+          </div>
+          <p style="font-size: 16px; margin-bottom: 8px;">Die Abwesenheit wurde erfolgreich gespeichert.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="closeSuccessBtn">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Supabase initialisieren
+    const SUPABASE_URL = "https://ggowwdhzpqwjlxaadaff.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdnb3d3ZGh6cHF3amx4YWFkYWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MjI1MzcsImV4cCI6MjA1Njk5ODUzN30.XxCVgVq9MqDeJl8oyolJLo0XHOwloTlRw7ya4Kr4HAM";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    // DOM-Elemente
+    const backButton = document.getElementById('backButton');
+    const sickDaysCount = document.getElementById('sickDaysCount');
+    const vacationDaysCount = document.getElementById('vacationDaysCount');
+    const otherDaysCount = document.getElementById('otherDaysCount');
+    const trainingDaysCount = document.getElementById('trainingDaysCount');
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const absenceNotes = document.getElementById('absenceNotes');
+    const resetButton = document.getElementById('resetButton');
+    const saveButton = document.getElementById('saveButton');
+    const calendarTitle = document.getElementById('calendarTitle');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const prevMonthBtn = document.getElementById('prevMonthBtn');
+    const nextMonthBtn = document.getElementById('nextMonthBtn');
+    const absenceListContainer = document.getElementById('absenceListContainer');
+    const emptyState = document.getElementById('emptyState');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const deleteModal = document.getElementById('deleteModal');
+    const closeDeleteModalButton = document.getElementById('closeDeleteModalButton');
+    const cancelDeleteButton = document.getElementById('cancelDeleteButton');
+    const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+    const deleteModalText = document.getElementById('deleteModalText');
+    const successModal = document.getElementById('successModal');
+    const closeSuccessModalButton = document.getElementById('closeSuccessModalButton');
+    const closeSuccessBtn = document.getElementById('closeSuccessBtn');
+
+    // Globale Variablen
+    let currentUser = null;
+    let userAbsences = [];
+    let deleteItemId = null;
+    const currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+
+    // Event-Listener
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Zurück-Button
+      backButton.addEventListener('click', () => {
+        window.location.href = "index.html";
+      });
+      
+      // Formular zurücksetzen
+      resetButton.addEventListener('click', resetForm);
+      
+      // Formular absenden
+      saveButton.addEventListener('click', saveAbsence);
+      
+      // Kalender-Navigation
+      prevMonthBtn.addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+          currentMonth = 11;
+          currentYear--;
+        }
+        updateCalendar();
+      });
+      
+      nextMonthBtn.addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+          currentMonth = 0;
+          currentYear++;
+        }
+        updateCalendar();
+      });
+      
+      // Datumsfeld-Validierung
+      startDateInput.addEventListener('change', validateDateRange);
+      endDateInput.addEventListener('change', validateDateRange);
+      
+      // Modal-Buttons
+      if (closeDeleteModalButton) {
+        closeDeleteModalButton.addEventListener('click', hideDeleteModal);
+      }
+      
+      if (cancelDeleteButton) {
+        cancelDeleteButton.addEventListener('click', hideDeleteModal);
+      }
+      
+      if (confirmDeleteButton) {
+        confirmDeleteButton.addEventListener('click', deleteAbsence);
+      }
+      
+      if (closeSuccessModalButton) {
+        closeSuccessModalButton.addEventListener('click', hideSuccessModal);
+      }
+      
+      if (closeSuccessBtn) {
+        closeSuccessBtn.addEventListener('click', hideSuccessModal);
+      }
+      
+      // Setze das heutige Datum als Standard für die Datumsfelder
+      setTodayAsDefaultDates();
+      
+      // Benutzer-Informationen laden
+      await loadUserInfo();
+      
+      // Abwesenheiten laden
+      await loadUserAbsences();
+      
+      // Kalender aktualisieren
+      updateCalendar();
+    });
+
+    // Benutzer-Informationen laden
+    async function loadUserInfo() {
+      showLoading();
+      
+      try {
+        // Benutzer-Session abrufen
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          currentUser = session.user;
+          
+          // Benutzerdetails aus der Datenbank laden
+          const { data: userDetails, error } = await supabase
+            .from("agents")
+            .select("*")
+            .eq("email", currentUser.email)
+            .single();
+          
+          if (!error && userDetails) {
+            currentUser = { ...currentUser, ...userDetails };
+          }
+        } else {
+          // Wenn keine Session vorhanden ist, zur Login-Seite weiterleiten
+          window.location.href = "index.html";
+          return;
+        }
+      } catch (error) {
+        console.error('Fehler beim Laden der Benutzerinformationen:', error);
+        showToast('Fehler beim Laden der Benutzerinformationen', 'error');
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Benutzer-Abwesenheiten laden
+    async function loadUserAbsences() {
+      showLoading();
+      
+      try {
+        if (!currentUser || !currentUser.id) {
+          console.error("Kein Benutzer angemeldet oder keine ID");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("absences")
+          .select("*")
+          .eq("agent_id", currentUser.id)
+          .order("start_date", { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        userAbsences = data || [];
+        updateAbsenceList();
+        updateStatistics();
+      } catch (error) {
+        console.error("Fehler beim Laden der Benutzer-Abwesenheiten:", error);
+        showToast('Fehler beim Laden der Abwesenheiten', 'error');
+        userAbsences = [];
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Statistiken aktualisieren
+    function updateStatistics() {
+      const currentYear = new Date().getFullYear();
+
+      // Filtere Abwesenheiten für das aktuelle Jahr
+      const thisYearAbsences = userAbsences.filter((absence) => {
+        const startDate = new Date(absence.start_date);
+        return startDate.getFullYear() === currentYear;
+      });
+
+      // Zähle Tage nach Typ
+      let sickDays = 0;
+      let vacationDays = 0;
+      let otherDays = 0;
+      let trainingDays = 0;
+
+      thisYearAbsences.forEach((absence) => {
+        const days = calculateDaysBetween(new Date(absence.start_date), new Date(absence.end_date));
+
+        if (absence.type === "krank") {
+          sickDays += days;
+        } else if (absence.type === "urlaub") {
+          vacationDays += days;
+        } else if (absence.type === "sonstiges") {
+          otherDays += days;
+        } else if (absence.type === "schulung") {
+          trainingDays += days;
+        }
+      });
+
+      // UI aktualisieren
+      sickDaysCount.textContent = sickDays;
+      vacationDaysCount.textContent = vacationDays;
+      otherDaysCount.textContent = otherDays;
+      trainingDaysCount.textContent = trainingDays;
+    }
+
+    // Abwesenheitsliste aktualisieren
+    function updateAbsenceList() {
+      if (!absenceListContainer) return;
+
+      // Liste leeren
+      absenceListContainer.innerHTML = "";
+
+      if (userAbsences.length === 0) {
+        emptyState.classList.remove("hidden");
+        return;
+      } else {
+        emptyState.classList.add("hidden");
+      }
+
+      // Abwesenheiten anzeigen
+      userAbsences.forEach((absence) => {
+        const absenceItem = document.createElement("div");
+        absenceItem.className = "absence-item";
+        
+        // Formatiere Daten
+        const startDate = formatDate(absence.start_date);
+        const endDate = formatDate(absence.end_date);
+        const days = calculateDaysBetween(new Date(absence.start_date), new Date(absence.end_date));
+        
+        // Abwesenheitstyp-Badge
+        const absenceTypeBadge = getAbsenceTypeBadge(absence.type);
+        
+        absenceItem.innerHTML = `
+          <div class="absence-details">
+            <div class="absence-type">${absenceTypeBadge} ${days} ${days === 1 ? 'Tag' : 'Tage'}</div>
+            <div class="absence-date">${startDate} - ${endDate}</div>
+            ${absence.notes ? `<div class="absence-notes">${absence.notes}</div>` : ''}
+          </div>
+          <div class="absence-actions">
+            <button class="absence-action delete" data-id="${absence.id}" title="Löschen">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+        
+        absenceListContainer.appendChild(absenceItem);
+      });
+      
+      // Event-Listener für Lösch-Buttons
+      document.querySelectorAll('.absence-action.delete').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const absenceId = e.currentTarget.dataset.id;
+          showDeleteModal(absenceId);
+        });
+      });
+    }
+
+    // Kalender aktualisieren
+    function updateCalendar() {
+      if (!calendarGrid || !calendarTitle) return;
+
+      // Setze den Monatstitel
+      const monthNames = [
+        "Januar", "Februar", "März", "April", "Mai", "Juni",
+        "Juli", "August", "September", "Oktober", "November", "Dezember"
+      ];
+      calendarTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+      // Entferne alle Tage außer den Wochentags-Header
+      const dayHeaders = Array.from(calendarGrid.querySelectorAll(".calendar-day-header"));
+      calendarGrid.innerHTML = "";
+      dayHeaders.forEach(header => calendarGrid.appendChild(header));
+
+      // Berechne den ersten Tag des Monats
+      const firstDay = new Date(currentYear, currentMonth, 1);
+
+      // Berechne den Wochentag des ersten Tags (0 = Sonntag, 1 = Montag, ..., 6 = Samstag)
+      let firstDayOfWeek = firstDay.getDay();
+
+      // Konvertiere Sonntag (0) zu 7, damit Montag (1) der erste Tag der Woche ist
+      if (firstDayOfWeek === 0) firstDayOfWeek = 7;
+
+      // Anzahl der Tage im aktuellen Monat
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      // Anzahl der Tage im vorherigen Monat
+      const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+      // Füge Tage des vorherigen Monats hinzu
+      for (let i = firstDayOfWeek - 1; i > 0; i--) {
+        const day = daysInPrevMonth - i + 1;
+        const date = new Date(currentYear, currentMonth - 1, day);
+        addCalendarDay(day, date, true);
+      }
+
+      // Füge Tage des aktuellen Monats hinzu
+      for (let i = 1; i <= daysInMonth; i++) {
+        const date = new Date(currentYear, currentMonth, i);
+        addCalendarDay(i, date, false);
+      }
+
+      // Berechne, wie viele Tage des nächsten Monats hinzugefügt werden müssen
+      const totalCells = Math.ceil((firstDayOfWeek - 1 + daysInMonth) / 7) * 7;
+      const nextMonthDays = totalCells - (firstDayOfWeek - 1 + daysInMonth);
+
+      // Füge Tage des nächsten Monats hinzu
+      for (let i = 1; i <= nextMonthDays; i++) {
+        const date = new Date(currentYear, currentMonth + 1, i);
+        addCalendarDay(i, date, true);
+      }
+    }
+
+    // Füge einen Tag zum Kalender hinzu
+    function addCalendarDay(dayNumber, date, isOtherMonth) {
+      const dayElement = document.createElement("div");
+      dayElement.className = `calendar-day${isOtherMonth ? " other-month" : ""}`;
+
+      // Markiere den heutigen Tag
+      const today = new Date();
+      if (
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()
+      ) {
+        dayElement.classList.add("today");
+      }
+
+      // Füge Datum-Attribut hinzu
+      dayElement.dataset.date = date.toISOString().split("T")[0];
+
+      // Füge Klick-Event hinzu
+      dayElement.addEventListener("click", () => {
+        // Setze das Datum im Formular
+        startDateInput.value = date.toISOString().split("T")[0];
+        endDateInput.value = date.toISOString().split("T")[0];
+      });
+
+      // Erstelle den Tag-Inhalt
+      const dayNumberElement = document.createElement("div");
+      dayNumberElement.className = "calendar-day-number";
+      dayNumberElement.textContent = dayNumber;
+      dayElement.appendChild(dayNumberElement);
+
+      // Füge Abwesenheiten für diesen Tag hinzu
+      const dateString = date.toISOString().split("T")[0];
+      const absencesForDay = userAbsences.filter((absence) => {
+        return dateString >= absence.start_date && dateString <= absence.end_date;
+      });
+
+      absencesForDay.forEach((absence) => {
+        const indicator = document.createElement("div");
+        indicator.className = `absence-indicator ${absence.type}`;
+        dayElement.appendChild(indicator);
+      });
+
+      calendarGrid.appendChild(dayElement);
+    }
+
+    // Abwesenheitstyp-Badge generieren
+    function getAbsenceTypeBadge(type) {
+      let typeText = "";
+      
+      switch (type) {
+        case "krank":
+          typeText = "Krankheit";
+          break;
+        case "urlaub":
+          typeText = "Urlaub";
+          break;
+        case "sonstiges":
+          typeText = "Sonstiges";
+          break;
+        case "schulung":
+          typeText = "Schulung";
+          break;
+        default:
+          typeText = type;
+          break;
+      }
+      
+      return `<span class="absence-badge ${type}">${typeText}</span>`;
+    }
+
+    // Setze das heutige Datum als Standard für die Datumsfelder
+    function setTodayAsDefaultDates() {
+      const today = new Date().toISOString().split("T")[0];
+      startDateInput.value = today;
+      endDateInput.value = today;
+    }
+
+    // Validiere den Datumsbereich
+    function validateDateRange() {
+      const startDate = new Date(startDateInput.value);
+      const endDate = new Date(endDateInput.value);
+
+      if (endDate < startDate) {
+        endDateInput.value = startDateInput.value;
+        showToast("Das Enddatum kann nicht vor dem Startdatum liegen.", "warning");
+      }
+    }
+
+    // Berechne die Anzahl der Tage zwischen zwei Daten (inklusive)
+    function calculateDaysBetween(startDate, endDate) {
+      // Setze die Uhrzeiten auf Mitternacht, um Probleme mit Sommerzeit zu vermeiden
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+
+      // Berechne die Differenz in Millisekunden
+      const diffTime = Math.abs(endDate - startDate);
+
+      // Konvertiere in Tage und füge 1 hinzu (inklusive)
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+      return diffDays;
+    }
+
+    // Formatiere Datum (DD.MM.YYYY)
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}.${month}.${year}`;
+    }
+
+    // Formular zurücksetzen
+    function resetForm() {
+      // Setze Abwesenheitstyp zurück
+      document.getElementById("absenceTypeKrank").checked = true;
+
+      // Setze Datumsfelder auf heute zurück
+      setTodayAsDefaultDates();
+
+      // Leere Bemerkungen
+      absenceNotes.value = "";
+    }
+
+    // Abwesenheit speichern
+    async function saveAbsence() {
+      showLoading();
+      
+      try {
+        // Validiere Eingaben
+        if (!startDateInput.value || !endDateInput.value) {
+          showToast("Bitte geben Sie Start- und Enddatum an.", "error");
+          return;
+        }
+
+        // Hole den ausgewählten Abwesenheitstyp
+        const absenceType = document.querySelector('input[name="absenceType"]:checked').value;
+
+        // Erstelle Abwesenheit
+        const { data, error } = await supabase
+          .from("absences")
+          .insert([
+            {
+              agent_id: currentUser.id,
+              type: absenceType,
+              start_date: startDateInput.value,
+              end_date: endDateInput.value,
+              notes: absenceNotes.value,
+            },
+          ])
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        // Aktualisiere UI
+        await loadUserAbsences();
+
+        // Formular zurücksetzen
+        resetForm();
+
+        // Zeige Erfolgsmodal
+        showSuccessModal();
+      } catch (error) {
+        console.error("Fehler beim Speichern der Abwesenheit:", error);
+        showToast("Fehler beim Speichern der Abwesenheit: " + error.message, "error");
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Lösch-Modal anzeigen
+    function showDeleteModal(id) {
+      deleteItemId = id;
+      
+      // Finde die Abwesenheit
+      const absence = userAbsences.find(a => a.id === id);
+      
+      if (absence) {
+        // Setze den Text im Modal
+        deleteModalText.textContent = `Möchten Sie diese ${getAbsenceTypeText(absence.type)} vom ${formatDate(absence.start_date)} bis ${formatDate(absence.end_date)} wirklich löschen?`;
+      }
+      
+      // Zeige das Modal
+      deleteModal.classList.add('show');
+    }
+
+    // Lösch-Modal ausblenden
+    function hideDeleteModal() {
+      deleteModal.classList.remove('show');
+      deleteItemId = null;
+    }
+
+    // Erfolgsmodal anzeigen
+    function showSuccessModal() {
+      successModal.classList.add('show');
+    }
+
+    // Erfolgsmodal ausblenden
+    function hideSuccessModal() {
+      successModal.classList.remove('show');
+    }
+
+    // Abwesenheitstyp-Text abrufen
+    function getAbsenceTypeText(type) {
+      switch (type) {
+        case "krank":
+          return "Krankheit";
+        case "urlaub":
+          return "Urlaub";
+        case "sonstiges":
+          return "Sonstige Abwesenheit";
+        case "schulung":
+          return "Schulung";
+        default:
+          return "Abwesenheit";
+      }
+    }
+
+    // Abwesenheit löschen
+    async function deleteAbsence() {
+      if (!deleteItemId) return;
+      
+      showLoading();
+      
+      try {
+        const { error } = await supabase.from("absences").delete().eq("id", deleteItemId);
+
+        if (error) {
+          throw error;
+        }
+
+        // Aktualisiere UI
+        await loadUserAbsences();
+        updateCalendar();
+
+        // Zeige Erfolgsmeldung
+        showToast("Abwesenheit erfolgreich gelöscht!");
+        
+        // Modal ausblenden
+        hideDeleteModal();
+      } catch (error) {
+        console.error("Fehler beim Löschen der Abwesenheit:", error);
+        showToast("Fehler beim Löschen der Abwesenheit: " + error.message, "error");
+      } finally {
+        hideLoading();
+      }
+    }
+
+    // Toast-Benachrichtigung anzeigen
+    function showToast(message, type = "success") {
+      toastMessage.textContent = message;
+      
+      // Toast-Farbe je nach Typ anpassen
+      if (type === "error") {
+        toast.style.backgroundColor = "#ef4444";
+      } else if (type === "warning") {
+        toast.style.backgroundColor = "#f59e0b";
+      } else {
+        toast.style.backgroundColor = "#10b981";
+      }
+      
+      toast.classList.add("show");
+      
+      // Nach 3 Sekunden ausblenden
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3000);
+    }
+
+    // Ladeanimation anzeigen
+    function showLoading() {
+      loadingOverlay.classList.remove("hidden");
+    }
+
+    // Ladeanimation ausblenden
+    function hideLoading() {
+      loadingOverlay.classList.add("hidden");
+    }
+  </script>
+</body>
+</html>

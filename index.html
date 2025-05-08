@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <!-- Aktualisieren Sie den Viewport-Meta-Tag für bessere mobile Darstellung -->
+  
+  <link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Agent Dashboard">
+<link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#fd7e14">
+  <title>Embers Agent Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/notification-styles.css">
+  <!-- Font Awesome für Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+  /* Fügen Sie diese Styles zu Ihrem vorhandenen CSS hinzu */
+  .notification-container {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 320px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    z-index: 100;
+    display: none;
+    margin-top: 10px;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .notification-container.show {
+    display: flex;
+  }
+
+  .notification-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .notification-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .notification-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mark-all-read-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: none;
+    background-color: var(--primary-light);
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mark-all-read-btn:hover {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .notification-list {
+    overflow-y: auto;
+    max-height: 300px;
+    padding: 8px 0;
+  }
+
+  .notification-item-small {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .notification-item-small:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+
+  .notification-item-small.unread {
+    background-color: var(--primary-light);
+  }
+
+  .notification-title-small {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .notification-message-small {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .notification-meta-small {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .notification-footer {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+
+  .view-all-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .notification-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-secondary);
+  }
+
+  .notification-empty i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+  }
+
+  .notification-empty p {
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .notification-bell-container {
+    position: relative;
+    margin-right: 15px;
+  }
+
+  .notification-bell {
+    background: var(--card-bg);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+
+  /* Ändern Sie die Farbe des Benachrichtigungs-Badges von Rot zu Orange */
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: var(--primary); /* Änderung von #ef4444 zu var(--primary) */
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+</style>
+</head>
+<body>
+  <div id="app">
+    <!-- Login-Bereich -->
+    <div id="login-container" class="container">
+      <div class="logo-container">
+        <div class="logo">EM</div>
+        <h1>Agent Dashboard</h1>
+      </div>
+
+      <div class="form-container">
+        <h2>Willkommen</h2>
+        <p class="subtitle">Bitte melden Sie sich mit Ihren Zugangsdaten an</p>
+
+        <div class="input-container">
+          <i class="fas fa-envelope input-icon"></i>
+          <input type="email" id="email" placeholder="E-Mail" autocomplete="email">
+        </div>
+
+        <div class="input-container">
+          <i class="fas fa-lock input-icon"></i>
+          <input type="password" id="password" placeholder="Passwort">
+          <i class="fas fa-eye toggle-password" id="toggle-password"></i>
+        </div>
+
+        <div class="remember-me-container">
+          <label class="remember-me-label">
+            <input type="checkbox" id="remember-me" checked>
+            <span class="checkmark"></span>
+            <span class="remember-text">Angemeldet bleiben</span>
+          </label>
+        </div>
+
+        <button id="login-button" class="primary-button">
+          <span>Anmelden</span>
+          <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <div class="footer">
+        <p>© 2025 Embers Call Center & Marketing GmbH</p>
+      </div>
+    </div>
+
+    <!-- Dashboard-Bereich (wird nach dem Login angezeigt) -->
+    <div id="dashboard-container" class="container hidden">
+      <!-- Header mit Benutzerinfo -->
+      <header class="dashboard-header">
+        <div class="user-info">
+          <div class="avatar" id="user-avatar">Asfinag App</div>
+          <div>
+            <h2 id="user-name">Benutzer</h2>
+            <p id="user-email">benutzer@example.com</p>
+          </div>
+        </div>
+        <!-- Benachrichtigungsglocke -->
+        <div class="notification-bell-container">
+          <button id="notificationBell" class="notification-bell">
+            <i class="fas fa-bell"></i>
+            <span id="notificationCount" class="notification-badge"></span>
+          </button>
+          <!-- Benachrichtigungen-Dropdown -->
+          <div id="notificationContainer" class="notification-container"></div>
+        </div>
+        <button id="logout-button" class="icon-button">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </header>
+
+      <!-- Willkommenskarte -->
+      <div class="welcome-card">
+        <h2>Willkommen, <span id="welcome-name">Benutzer</span>!</h2>
+        <p>Hier finden Sie eine Übersicht Ihrer Benutzerinformationen und Aktivitäten.</p>
+        <p id="current-date" class="date"></p>
+      </div>
+
+      <!-- Menü-Grid -->
+      <div class="menu-grid">
+        <div class="menu-item" onclick="window.location.href='mail-pool.html'">
+          <div class="menu-icon">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <span>Mail-Pool</span>
+        </div>
+
+        <div class="menu-item" onclick="window.location.href='push-nachrichten.html'">
+          <div class="menu-icon">
+            <i class="fas fa-bell"></i>
+            <span id="notification-badge" class="badge hidden">0</span>
+          </div>
+          <span>Benachrichtigungen</span>
+        </div>
+
+        <div class="menu-item" onclick="window.location.href='profile.html'">
+          <div class="menu-icon">
+            <i class="fas fa-user"></i>
+          </div>
+          <span>Profil</span>
+        </div>
+
+        <div class="menu-item" onclick="window.location.href='abwesenheit.html'">
+          <div class="menu-icon">
+            <i class="fas fa-calendar-days"></i>
+          </div>
+          <span>Abwesenheit</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ladebildschirm -->
+    <div id="loading-screen" class="loading-screen hidden">
+      <div class="spinner"></div>
+      <p>Wird geladen...</p>
+    </div>
+
+    <!-- Dialoge -->
+    <div id="dialog-overlay" class="dialog-overlay hidden">
+      <div id="dialog" class="dialog">
+        <h3 id="dialog-title">Dialog</h3>
+        <p id="dialog-message">Nachricht</p>
+        <div id="dialog-input-container" class="input-container hidden">
+          <input type="text" id="dialog-input" placeholder="Eingabe">
+        </div>
+        <div class="dialog-buttons">
+          <button id="dialog-cancel" class="secondary-button">Abbrechen</button>
+          <button id="dialog-confirm" class="primary-button">OK</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Benachrichtigungston -->
+    <audio id="notificationSound" class="notification-sound">
+      <source src="https://assets.mixkit.co/sfx/preview/mixkit-simple-notification-tone-3156.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <!-- Skripte -->
+  <script>
+    // Supabase initialisieren
+    const SUPABASE_URL = "https://ggowwdhzpqwjlxaadaff.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdnb3d3ZGh6cHF3amx4YWFkYWZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0MjI1MzcsImV4cCI6MjA1Njk5ODUzN30.XxCVgVq9MqDeJl8oyolJLo0XHOwloTlRw7ya4Kr4HAM";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true, // Session in localStorage speichern
+        autoRefreshToken: true, // Token automatisch aktualisieren
+        detectSessionInUrl: true // Session aus URL erkennen
+      }
+    });
+    
+    // Hauptanwendungslogik
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Initialisiere die Anwendung
+      initApp();
+      
+      // Prüfe, ob der Benutzer bereits angemeldet ist
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          // Benutzer ist angemeldet, zeige Dashboard
+          showDashboard();
+          
+          // Benutzer-ID im lokalen Speicher speichern für Push-Benachrichtigungen
+          localStorage.setItem("userId", session.user.id);
+          
+          // Push-Benachrichtigungen initialisieren
+          initPushNotifications();
+        } else {
+          // Benutzer ist nicht angemeldet, zeige Login
+          showLogin();
+          
+          // Gespeicherte E-Mail-Adresse abrufen, falls vorhanden
+          const savedEmail = localStorage.getItem("rememberedEmail");
+          if (savedEmail) {
+            document.getElementById("email").value = savedEmail;
+            document.getElementById("remember-me").checked = true;
+          }
+        }
+      } catch (error) {
+        console.error("Fehler beim Prüfen der Session:", error);
+        showLogin();
+      }
+    });
+    
+    // Initialisiere die Anwendung
+    function initApp() {
+      // Event-Listener für Login-Button
+      const loginButton = document.getElementById("login-button");
+      if (loginButton) {
+        loginButton.addEventListener("click", handleLogin);
+      }
+      
+      // Event-Listener für Toggle-Password
+      const togglePassword = document.getElementById("toggle-password");
+      if (togglePassword) {
+        togglePassword.addEventListener("click", () => {
+          const passwordInput = document.getElementById("password");
+          const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+          passwordInput.setAttribute("type", type);
+          togglePassword.classList.toggle("fa-eye");
+          togglePassword.classList.toggle("fa-eye-slash");
+        });
+      }
+      
+      // Enter-Taste für Login
+      const passwordInput = document.getElementById("password");
+      if (passwordInput) {
+        passwordInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            handleLogin();
+          }
+        });
+      }
+      
+      // Event-Listener für Abmelden-Button
+      const logoutButton = document.getElementById("logout-button");
+      if (logoutButton) {
+        logoutButton.addEventListener("click", handleLogout);
+      }
+      
+      // Initialisiere Dialog-Buttons
+      const dialogCancel = document.getElementById("dialog-cancel");
+      if (dialogCancel) {
+        dialogCancel.addEventListener("click", hideDialog);
+      }
+      
+      // Aktuelles Datum anzeigen
+      updateCurrentDate();
+    }
+    
+    // Login-Handler
+    async function handleLogin() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const rememberMe = document.getElementById("remember-me").checked;
+      
+      if (!email || !password) {
+        showDialog("Fehler", "Bitte geben Sie Ihre E-Mail und Ihr Passwort ein.");
+        return;
+      }
+      
+      showLoading();
+      
+      try {
+        // Wenn "Angemeldet bleiben" aktiviert ist, E-Mail speichern
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", email);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+        }
+        
+        // Anmelden mit persistSession Option
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+        
+        // Benutzer-ID im lokalen Speicher speichern für Push-Benachrichtigungen
+        if (data && data.user) {
+          localStorage.setItem("userId", data.user.id);
+        }
+        
+        // Bei erfolgreicher Anmeldung wird das Dashboard angezeigt
+        showDashboard();
+        
+        // Push-Benachrichtigungen initialisieren
+        initPushNotifications();
+      } catch (error) {
+        console.error("Fehler beim Anmelden:", error);
+        hideLoading();
+        showDialog(
+          "Anmeldung fehlgeschlagen",
+          "Falsches Passwort oder ungültige E-Mail-Adresse."
+        );
+      }
+    }
+    
+    // Abmelden
+    async function handleLogout() {
+      showLoading();
+      
+      try {
+        // Push-Benachrichtigungen abbestellen
+        // Prüfen, ob die Funktion existiert, bevor sie aufgerufen wird
+        if (window.pushNotifications && typeof window.pushNotifications.unsubscribe === 'function') {
+          await window.pushNotifications.unsubscribe();
+        } else {
+          console.log('Keine Abmelde-Funktion für Push-Benachrichtigungen verfügbar');
+        }
+        
+        // Benutzer-ID aus dem lokalen Speicher entfernen
+        localStorage.removeItem("userId");
+        
+        // Abmelden
+        await supabase.auth.signOut();
+        showLogin();
+      } catch (error) {
+        console.error("Fehler beim Abmelden:", error);
+        showError("Fehler beim Abmelden. Bitte versuchen Sie es erneut.");
+      } finally {
+        hideLoading();
+      }
+    }
+    
+    // Zeige das Dashboard
+    async function showDashboard() {
+      showLoading();
+      
+      try {
+        // Hole Benutzerdaten
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          showLogin();
+          return;
+        }
+        
+        // Hole Benutzerdetails aus der Datenbank
+        const { data: userDetails, error } = await supabase
+          .from("agents")
+          .select("*")
+          .eq("email", user.email)
+          .single();
+        
+        if (error && error.code !== "PGRST116") {
+          console.error("Fehler beim Laden der Benutzerdetails:", error);
+        }
+        
+        // Aktualisiere UI mit Benutzerdaten
+        updateUserUI(user, userDetails);
+        
+        // Verstecke Login und zeige Dashboard
+        document.getElementById("login-container").classList.add("hidden");
+        document.getElementById("dashboard-container").classList.remove("hidden");
+        
+        // Prüfe auf ungelesene Benachrichtigungen
+        checkNotifications(user.id);
+      } catch (error) {
+        console.error("Fehler beim Laden des Dashboards:", error);
+        showError("Fehler beim Laden des Dashboards. Bitte versuchen Sie es erneut.");
+      } finally {
+        hideLoading();
+      }
+    }
+    
+    // Zeige den Login-Bildschirm
+    function showLogin() {
+      document.getElementById("dashboard-container").classList.add("hidden");
+      document.getElementById("login-container").classList.remove("hidden");
+      hideLoading();
+    }
+    
+    // Aktualisiere die Benutzeroberfläche mit Benutzerdaten
+    function updateUserUI(user, userDetails) {
+      const details = userDetails || {};
+      const name = details.name || user.email?.split("@")[0] || "Benutzer";
+      const initials = getInitials(name);
+      
+      // Dashboard Header
+      document.getElementById("user-name").textContent = name;
+      document.getElementById("user-email").textContent = user.email;
+      document.getElementById("user-avatar").textContent = initials;
+      
+      // Willkommenskarte
+      document.getElementById("welcome-name").textContent = name.split(" ")[0] || "Benutzer";
+    }
+    
+    // Prüfe auf ungelesene Benachrichtigungen
+    async function checkNotifications(userId) {
+      try {
+        const { data, error } = await supabase.from("notifications").select("*").eq("agent_id", userId).eq("read", false);
+
+        if (error) throw error;
+
+        const unreadCount = data?.length || 0;
+        const badge = document.getElementById("notification-badge");
+
+        if (unreadCount > 0) {
+          badge.textContent = unreadCount;
+          badge.classList.remove("hidden");
+        } else {
+          badge.classList.add("hidden");
+        }
+        
+        // Aktualisiere auch den Benachrichtigungszähler in der Glocke
+        const notificationCount = document.getElementById("notificationCount");
+        if (notificationCount) {
+          if (unreadCount > 0) {
+            notificationCount.textContent = unreadCount;
+            notificationCount.style.display = "flex";
+          } else {
+            notificationCount.style.display = "none";
+          }
+        }
+      } catch (error) {
+        console.error("Fehler beim Laden der Benachrichtigungen:", error);
+      }
+    }
+    
+    // Hilfsfunktionen
+    function getInitials(name) {
+      if (!name) return "?";
+      
+      const nameParts = name.split(" ");
+      if (nameParts.length >= 2) {
+        return nameParts[0].charAt(0) + nameParts[1].charAt(0);
+      }
+      return name.charAt(0);
+    }
+    
+    function formatDate(dateString) {
+      if (!dateString) return null;
+      
+      const date = new Date(dateString);
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      return date.toLocaleDateString("de-DE", options);
+    }
+    
+    function updateCurrentDate() {
+      const date = new Date();
+      const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
+      const currentDateElement = document.getElementById("current-date");
+      if (currentDateElement) {
+        currentDateElement.textContent = date.toLocaleDateString("de-DE", options);
+      }
+    }
+    
+    // Lade-Anzeige
+    function showLoading() {
+      document.getElementById("loading-screen").classList.remove("hidden");
+    }
+    
+    function hideLoading() {
+      document.getElementById("loading-screen").classList.add("hidden");
+    }
+    
+    // Dialog-Funktionen
+    let dialogResolve = null;
+    
+    function showDialog(title, message, inputPlaceholder = null) {
+      return new Promise((resolve) => {
+        dialogResolve = resolve;
+        
+        const dialog = document.getElementById("dialog");
+        const overlay = document.getElementById("dialog-overlay");
+        const titleEl = document.getElementById("dialog-title");
+        const messageEl = document.getElementById("dialog-message");
+        const inputContainer = document.getElementById("dialog-input-container");
+        const input = document.getElementById("dialog-input");
+        const confirmBtn = document.getElementById("dialog-confirm");
+        
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+        
+        if (inputPlaceholder) {
+          input.placeholder = inputPlaceholder;
+          input.value = "";
+          inputContainer.classList.remove("hidden");
+        } else {
+          inputContainer.classList.add("hidden");
+        }
+        
+        overlay.classList.remove("hidden");
+        
+        confirmBtn.onclick = function() {
+          overlay.classList.add("hidden");
+          if (dialogResolve) {
+            dialogResolve(inputPlaceholder ? input.value : true);
+            dialogResolve = null;
+          }
+        };
+      });
+    }
+    
+    function hideDialog() {
+      document.getElementById("dialog-overlay").classList.add("hidden");
+      if (dialogResolve) {
+        dialogResolve(false);
+        dialogResolve = null;
+      }
+    }
+    
+    function showError(message) {
+      showDialog("Fehler", message);
+    }
+    
+    // Push-Benachrichtigungen initialisieren
+    async function initPushNotifications() {
+      // Skript dynamisch laden
+      const script = document.createElement('script');
+      script.src = 'js/push-notifications.js';
+      script.onload = async function() {
+        // Wenn das Skript geladen ist, Push-Benachrichtigungen initialisieren
+        if (window.pushNotifications) {
+          const pushEnabled = await window.pushNotifications.init();
+          
+          if (pushEnabled) {
+            console.log('Push-Benachrichtigungen erfolgreich initialisiert');
+            
+            // Benachrichtigungszähler aktualisieren
+            window.pushNotifications.updateBadge();
+            
+            // Notification Component initialisieren
+            const notificationBell = document.getElementById('notificationBell');
+            const notificationContainer = document.getElementById('notificationContainer');
+            
+            if (notificationBell && notificationContainer) {
+              // Event-Listener für die Glocke
+              notificationBell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notificationContainer.classList.toggle('show');
+                
+                // Benachrichtigungen laden, wenn das Dropdown geöffnet wird
+                if (notificationContainer.classList.contains('show')) {
+                  loadNotifications(notificationContainer);
+                }
+              });
+              
+              // Klick außerhalb schließt das Dropdown
+              document.addEventListener('click', (e) => {
+                if (notificationContainer.classList.contains('show') && 
+                    !notificationContainer.contains(e.target) && 
+                    e.target.id !== 'notificationBell') {
+                  notificationContainer.classList.remove('show');
+                }
+              });
+            }
+            
+            // Abonnieren, wenn noch nicht abonniert
+            if (!window.pushNotifications.isSubscribed) {
+              try {
+                await window.pushNotifications.subscribe();
+              } catch (error) {
+                console.error('Fehler beim Abonnieren von Push-Benachrichtigungen:', error);
+              }
+            }
+          }
+        }
+      };
+      document.body.appendChild(script);
+    }
+    
+    // Benachrichtigungen laden und anzeigen
+    async function loadNotifications(container) {
+      if (!container) return;
+      
+      try {
+        // Benutzer-ID abrufen
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          console.error("Keine aktive Sitzung gefunden");
+          container.innerHTML = `
+            <div class="notification-header">
+              <h3>Benachrichtigungen</h3>
+            </div>
+            <div class="notification-list">
+              <div class="notification-empty">
+                <i class="fas fa-user-lock"></i>
+                <p>Bitte melden Sie sich an, um Benachrichtigungen zu sehen.</p>
+              </div>
+            </div>
+          `;
+          return;
+        }
+        
+        // Benachrichtigungen direkt aus Supabase laden
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("agent_id", session.user.id)
+          .order("created_at", { ascending: false });
+        
+        if (error) throw error;
+        
+        // Container leeren
+        container.innerHTML = '';
+        
+        // Header erstellen
+        const header = document.createElement('div');
+        header.className = 'notification-header';
+        header.innerHTML = `
+          <h3>Benachrichtigungen</h3>
+          <div class="notification-actions">
+            <button class="mark-all-read-btn">Alle lesen</button>
+          </div>
+        `;
+        
+        // Event-Listener für "Alle lesen"-Button
+        const markAllReadBtn = header.querySelector('.mark-all-read-btn');
+        if (markAllReadBtn) {
+          markAllReadBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+              const { error } = await supabase
+                .from('notifications')
+                .update({ read: true })
+                .eq('agent_id', session.user.id)
+                .eq('read', false);
+              
+              if (error) throw error;
+              
+              // Benachrichtigungen neu laden
+              loadNotifications(container);
+              
+              // Badge aktualisieren
+              checkNotifications(session.user.id);
+            } catch (error) {
+              console.error('Fehler beim Markieren aller als gelesen:', error);
+            }
+          });
+        }
+        
+        container.appendChild(header);
+        
+        // Liste erstellen
+        const list = document.createElement('div');
+        list.className = 'notification-list';
+        
+        // Benachrichtigungen anzeigen
+        if (!data || data.length === 0) {
+          // Leerer Zustand
+          list.innerHTML = `
+            <div class="notification-empty">
+              <i class="fas fa-bell-slash"></i>
+              <p>Keine Benachrichtigungen vorhanden</p>
+            </div>
+          `;
+        } else {
+          // Benachrichtigungen anzeigen (maximal 5)
+          const notificationsToShow = data.slice(0, 5);
+          
+          notificationsToShow.forEach((notification) => {
+            const item = createNotificationItem(notification);
+            list.appendChild(item);
+          });
+        }
+        
+        container.appendChild(list);
+        
+        // Footer erstellen
+        const footer = document.createElement('div');
+        footer.className = 'notification-footer';
+        footer.innerHTML = `
+          <a href="push-nachrichten.html" class="view-all-link">Alle Benachrichtigungen anzeigen</a>
+        `;
+        
+        container.appendChild(footer);
+      } catch (error) {
+        console.error('Fehler beim Laden der Benachrichtigungen:', error);
+        container.innerHTML = `
+          <div class="notification-header">
+            <h3>Benachrichtigungen</h3>
+          </div>
+          <div class="notification-list">
+            <div class="notification-empty">
+              <i class="fas fa-exclamation-circle"></i>
+              <p>Fehler beim Laden der Benachrichtigungen</p>
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    // Benachrichtigungselement erstellen
+    function createNotificationItem(notification) {
+      const item = document.createElement('div');
+      item.className = `notification-item-small ${notification.read ? 'read' : 'unread'}`;
+      item.dataset.id = notification.id;
+      
+      // Datum formatieren
+      const date = new Date(notification.created_at);
+      const formattedDate = date.toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      
+      item.innerHTML = `
+        <div class="notification-content-small">
+          <div class="notification-title-small">${notification.title || 'Keine Überschrift'}</div>
+          <div class="notification-message-small">${notification.message || 'Keine Nachricht'}</div>
+          <div class="notification-meta-small">
+            <span class="notification-time-small">${formattedDate}</span>
+            <span class="notification-status-small">${notification.read ? 'Gelesen' : 'Ungelesen'}</span>
+          </div>
+        </div>
+      `;
+      
+      // Klick auf die Benachrichtigung markiert sie als gelesen
+      item.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        
+        if (!notification.read) {
+          try {
+            const { error } = await supabase
+              .from('notifications')
+              .update({ read: true })
+              .eq('id', notification.id);
+            
+            if (error) throw error;
+          } catch (error) {
+            console.error('Fehler beim Markieren als gelesen:', error);
+          }
+        }
+        
+        // Zur Detailseite navigieren
+        window.location.href = 'push-nachrichten.html';
+      });
+      
+      return item;
+    }
+  </script>
+</body>
+</html>
